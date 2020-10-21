@@ -1,0 +1,11 @@
+{
+    "cloudmailin": {
+        "key": null
+    },
+    "smtp": {
+        "hostname": null,
+        "port": 587,
+        "username": null,
+        "password": null
+    }
+}
