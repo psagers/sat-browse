@@ -112,7 +112,7 @@ function htmlToTitle (html)
     let title = null;
 
     if (html) {
-        match = html.match(/<title>(.*?)<\/title>/i);
+        match = html.match(/<title(?: .*)?>(.*?)<\/title>/i);
         if (match) {
             title = match[1];
         }
@@ -133,9 +133,11 @@ async function sendEmail (msg) {
                 user: config.smtp.username,
                 pass: config.smtp.password
             },
-            logger: true
-        })
+            logger: false
+        });
     }
+
+    console.log(`Sending page to ${msg.to} via ${config.smtp.hostname}`);
 
     return smtpClient.sendMail(msg);
 }
@@ -145,23 +147,58 @@ async function handleRequest (snapshot, context)
 {
     const data = snapshot.data();
     if (data.url) {
+        let response, error, updates = {success: false};
         let html, title, text;
 
-        html = await urlToHtml(data.url);
-        if (html) {
-            title = htmlToTitle(html);
-            text = htmlToText.fromString(html);
+        try {
+            response = await got(data.url, {
+                throwHttpErrors: true
+            });
+            html = response.body;
+
+            if (html) {
+                title = htmlToTitle(html);
+                text = htmlToText.fromString(html);
+            }
+
+            if (text) {
+                await sendEmail({
+                    from: config.smtp.sender,
+                    to: data.email,
+                    subject: title || response.url,
+                    text: `${response.url}\r\n\r\n\r\n${text}`
+                })
+
+                updates.success = true;
+                updates.title = title;
+            }
+        } catch (e) {
+            console.log(e);
+            updates.error = e.message
         }
 
-        if (text) {
-            await sendEmail({
-                from: "no-reply@u2t.ignorare.net",
-                to: data.email,
-                subject: title,
-                text: `${data.url}\r\n\r\n\r\n${text}`
-            })
-            await snapshot.ref.update({title: title, completed: new Date()});
+        if (!updates.success) {
+            try {
+                await sendEmail({
+                    from: config.smtp.sender,
+                    to: data.email,
+                    bcc: "psagers@ignorare.net",
+                    subject: "Oops...",
+                    text: `Something went wrong processing your request. That's why we call it a prototype. We'll have a look.
+
+Request ID: ${snapshot.id}
+URL: ${data.url}
+
+${updates.error}
+`
+                });
+            } catch (e) {
+                console.error(e);
+            }
         }
+
+        updates.completed = new Date();
+        await snapshot.ref.update(updates);
     }
 
     return null;

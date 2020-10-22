@@ -3,6 +3,7 @@
         "key": null
     },
     "smtp": {
+        "sender": null,
         "hostname": null,
         "port": 587,
         "username": null,
