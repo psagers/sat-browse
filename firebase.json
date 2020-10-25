@@ -5,7 +5,7 @@
   },
   "functions": {
     "predeploy": [
-      "yarn exec -s eslint \"$RESOURCE_DIR\""
+      "yarn exec -s shadow-cljs release functions"
     ]
   }
 }

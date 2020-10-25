@@ -39,7 +39,7 @@
   [^js http-response]
   (when-some [value (gobj/getValueByKeys http-response "headers" "content-disposition")]
     (let [result (content-disposition/parse value)]
-      (gobj/getValueByKeys result "type" "parameters"))))
+      (-> result .-parameters .-filename))))
 
 
 (defn- response->url-filename
@@ -95,7 +95,7 @@
   [{:keys [content-type ^js http-response]}]
   (let [filename (response->filename http-response)]
     {:title filename
-     :text (str "This URL returned a file of type " (simple-content-type content-type))
+     :text (str "This URL returned a file of type " (simple-content-type content-type) "\n\n")
      :attachments [{:filename filename
                     :content (.-rawBody http-response)
                     :contentType content-type}]}))
@@ -105,11 +105,11 @@
   "Processes the successful http-response in a req."
   [{:keys [^js http-response] :as req}]
   (if http-response
-    (let [ctype (gobj/getValueByKeys http-response "headers" "content-type")]
-      (-> (assoc req :content-type ctype)
-          (merge (case (simple-content-type ctype)
+    (let [ctype (gobj/getValueByKeys http-response "headers" "content-type")
+          req (assoc req :content-type ctype)]
+      (merge req (case (simple-content-type ctype)
                    "text/html" (req->html-result req)
-                   (req->other-result req)))))
+                   (req->other-result req))))
     req))
 
 
