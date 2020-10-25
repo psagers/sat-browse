@@ -1,0 +1,9 @@
+{:source-paths ["cljs"]
+
+ :dependencies [[cljs-bean "1.6.0"]
+                [com.taoensso/encore "3.9.1"]]
+
+ :builds {:functions {:target :node-library
+                      :output-to "functions/index.js"
+                      :compiler-options {:infer-externs :auto}
+                      :exports-fn sat-browse/exports}}}

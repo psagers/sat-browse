@@ -5,7 +5,7 @@
     "smtp": {
         "sender": null,
         "hostname": null,
-        "port": 587,
+        "port": "587",
         "username": null,
         "password": null
     }
