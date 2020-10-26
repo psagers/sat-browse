@@ -126,14 +126,17 @@
 
 (defn- send-result
   "Sends the final result back to the requester's email address."
-  [{:keys [email url final-url title text attachments] :as req}]
+  [{:keys [email url final-url content-type title text attachments] :as req}]
   (let [msg (assoc-some {:from (-> @config :smtp :sender)
                          :to email
                          :subject (or title final-url url)}
                         :text (str (or final-url url) "\n\n\n" text)
                         :attachments attachments)]
-    (smtp/send-email msg))
-  req)
+    (-> (smtp/send-email msg)
+        (.then #(do (js/console.log "Delivered %s resource to %s"
+                                    (simple-content-type content-type)
+                                    email)
+                    req)))))
 
 
 (defn- handle-error
@@ -161,7 +164,7 @@ URL: " url "
 (defn- update-request
   "Updates the Firestore request document after all processing is finished."
   [{:keys [doc-ref] :as req}]
-  (let [updates (assoc (select-keys req [:success :title :error :abort?])
+  (let [updates (assoc (select-keys req [:final-url :content-type :title :error :abort?])
                        :completed (js/Date.))]
     (.update doc-ref (clj->js updates))))
 

@@ -60,7 +60,7 @@
 
 (defn- add-request-docs
   [{:keys [email] :as req}]
-  (let [urls (text->urls (-> req :body :plain))
+  (let [urls (vec (text->urls (-> req :body :plain)))
         requests (.collection ^js @db "requests")
         batch (.batch ^js @db)]
     (doseq [url urls]
@@ -69,7 +69,8 @@
             #js {:url url, :email email, :received (js/Date.)}))
 
     (-> (.commit batch)
-        (.then (constantly req)))))
+        (.then #(do (js/console.log "Added %d requests for %s" (count urls) email)
+                    req)))))
 
 
 (defn- finish
