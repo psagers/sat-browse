@@ -1,9 +1,15 @@
 {:source-paths ["cljs"]
 
  :dependencies [[cljs-bean "1.6.0"]
-                [com.taoensso/encore "3.9.1"]]
+                [com.taoensso/encore "3.9.1"]
+                [gnl/ghostwheel "0.3.9"]
+                [gnl/ghostwheel.tracer "0.3.9"]]
 
  :builds {:functions {:target :node-library
                       :output-to "functions/index.js"
                       :compiler-options {:infer-externs :auto}
-                      :exports-fn sat-browse/exports}}}
+                      :exports-fn sat-browse/exports
+
+                      :dev {:compiler-options {:external-config {:ghostwheel {:check true
+                                                                              :instrument true
+                                                                              :ignore-fx true}}}}}}}

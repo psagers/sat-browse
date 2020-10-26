@@ -8,16 +8,16 @@
 
 (defn- abort
   "Bails out of the request processing early."
-  [req]
-  (throw (ex-info "Abort" {:req (assoc req :abort? true)})))
+  [msg req]
+  (throw (ex-info msg {:req (assoc req :abort? true)})))
 
 
-(defn- validate-request
+(defn- authorize-request
   [req]
   (let [expected (-> ^js @config :cloudmailin :key)
         actual (gobj/getValueByKeys (:http-req req) "query" "key")]
     (if (and (not-empty expected) (not= expected actual))
-      (abort (assoc req :status 403))
+      (abort "Rejected unauthorized request" (assoc req :status 403))
       req)))
 
 
@@ -28,13 +28,13 @@
 
 (defn- lookup-user
   [req]
-  (if-some [email (-> req :body :envelope :from)]
+  (if-some [email (-> req :body :envelope :from not-empty)]
     (-> (get-email-doc email)
         (.then (fn [^js doc]
                  (if (.-exists doc)
                    (assoc req :email email, :email-doc doc)
-                   (abort req)))))
-    (abort req)))
+                   (abort (str "Rejecting unregistered email " email) req)))))
+    (abort "No envelope sender present" req)))
 
 
 (defn- text->urls
@@ -82,7 +82,8 @@
   [^js res, error]
   (let [{:keys [req]} (ex-data error)]
     (if (:abort? req)
-      (finish res req)
+      (do (js/console.debug (ex-message error))
+          (finish res req))
       (do (js/console.error error)
           (.status res 500)
           (.send res (ex-message error))))))
@@ -93,7 +94,7 @@
   (let [req {:http-req http-req
              :body (-> http-req .-body ->clj)}]
     (-> (js/Promise.resolve req)
-        (.then validate-request)
+        (.then authorize-request)
         (.then lookup-user)
         (.then add-request-docs)
         (.then #(finish res %)

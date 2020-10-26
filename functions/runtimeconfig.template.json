@@ -2,8 +2,11 @@
     "cloudmailin": {
         "key": null
     },
-    "smtp": {
+    "email": {
         "sender": null,
+        "transport": "smtp"
+    },
+    "smtp": {
         "hostname": null,
         "port": "587",
         "username": null,

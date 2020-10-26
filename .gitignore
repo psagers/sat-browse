@@ -66,6 +66,5 @@ node_modules/
 .env
 
 
-# Secrets
-functions/config.json
 .shadow-cljs/
+.clj-kondo/

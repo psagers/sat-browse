@@ -1,0 +1,6 @@
+{:linters
+ {:unresolved-symbol
+  {:exclude [(better-cond.core/cond)]}}
+
+ :lint-as {ghostwheel.core/>defn clojure.core/defn
+           ghostwheel.core/>defn- clojure.core/defn}}
