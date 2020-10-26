@@ -92,11 +92,11 @@
       (response->url-filename http-response)))
 
 
-(defn- handle-http-error
-  "Traps got/HTTPError and converts it into an abort."
+(defn- handle-request-error
+  "Traps got/RequestError and converts it into an abort."
   [req, ^js error]
   ;; [::req error? => any?]
-  (if (instance? got/HTTPError error)
+  (if (instance? got/RequestError error)
     (let [msg (ex-message error)
           http-response (.-response error)]
       (abort msg (assoc req :http-response http-response)))
@@ -114,7 +114,7 @@
 
   (-> (got url #js {:throwHttpErrors true})
       (.then #(assoc req :http-response %, :final-url (-> % .-url)))
-      (.catch #(handle-http-error req %))))
+      (.catch #(handle-request-error req %))))
 
 
 (defn- req->html-result
